@@ -1,0 +1,105 @@
+{
+  "hubspot": {
+    "portal_id": "146962608",
+    "region": "EU1",
+    "contact_properties": {
+      "email": "email",
+      "utm_source": "utm_source",
+      "fallback_analytics_source": "hs_analytics_source",
+      "fallback_analytics_source_detail": "hs_analytics_source_data_1",
+      "lifecycle_stage": "lifecyclestage",
+      "member_stage": "etape_membre_vjl",
+      "email_domain": "hs_email_domain",
+      "email_optout": "hs_email_optout"
+    },
+    "deal_properties": {
+      "pipeline": "pipeline",
+      "stage": "dealstage",
+      "close_date": "closedate"
+    },
+    "sql": {
+      "property": "lifecyclestage",
+      "value": "salesqualifiedlead"
+    },
+    "signed_member": {
+      "contact_property": "etape_membre_vjl",
+      "won_stage_id": "3569181942",
+      "deal_pipeline_id": "2584762580",
+      "deal_stage_id": "3569181942",
+      "dedupe_order": ["contact_id", "email", "deal_id"]
+    },
+    "mql": {
+      "forms": [
+        {
+          "label": "MDB Score",
+          "form_id": null
+        },
+        {
+          "label": "Cercle IA",
+          "form_id": null
+        },
+        {
+          "label": "Ebook",
+          "form_id": null
+        },
+        {
+          "label": "Tally candidature",
+          "form_id": null,
+          "fallback_property": null,
+          "fallback_value": null
+        }
+      ]
+    },
+    "source_mapping": {
+      "youtube": ["youtube"],
+      "linkedin": ["linkedin"],
+      "newsletter": ["newsletter", "email", "hs_email"],
+      "website": ["lecerclemdb.com", "site_lecerclemdb"],
+      "mdb_score": ["mdb_score"],
+      "google": ["google"],
+      "instagram": ["instagram"],
+      "partner": ["partner"],
+      "other": ["louisleboss"]
+    }
+  },
+  "newsletter": {
+    "source": "hubspot_marketing_email",
+    "list": {
+      "name": "INSCRITS_NEWSLETTER",
+      "id": "19",
+      "legacy_v1_id": "8",
+      "description": "Inscrits a la Newsletter",
+      "type": "active_contact_segment"
+    },
+    "active_subscriber_definition": {
+      "in_list": true,
+      "email_optout_property": "hs_email_optout",
+      "email_optout_value": false,
+      "marketing_contact_required": true
+    },
+    "exclude_email_domains": ["lecerclemdb.com"],
+    "email_filters": {
+      "include_text_contains": ["newsletter"],
+      "exclude_states": ["DRAFT", "AUTOMATED_DRAFT"]
+    },
+    "statistics_fields": {
+      "delivered": "delivered",
+      "unique_opens": "open",
+      "send_date": "publishDate",
+      "sent": "sent",
+      "clicks": "click",
+      "bounces": "bounce",
+      "dropped": "dropped",
+      "processed": "processed"
+    }
+  },
+  "website": {
+    "source": "ga4",
+    "domain": "lecerclemdb.com",
+    "hostnames": ["www.lecerclemdb.com", "lecerclemdb.com"],
+    "metric": "sessions"
+  },
+  "kpi_snapshot": {
+    "object_type": null
+  }
+}
