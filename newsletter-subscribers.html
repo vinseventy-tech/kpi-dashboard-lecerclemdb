@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Abonnes newsletter</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, Arial, sans-serif; }
+    body { margin: 0; background: #101223; color: #F8FAFC; }
+    main { padding: 22px 26px 18px; background: radial-gradient(circle at 85% 10%, rgba(201,162,74,.16), transparent 34%), #101223; min-height: 100vh; box-sizing: border-box; }
+    h1 { font-size: 25px; line-height: 1.2; margin: 0 0 14px; letter-spacing: .01em; }
+    .summary { display: flex; gap: 28px; align-items: baseline; margin-bottom: 8px; }
+    .label { font-size: 12px; color: #7C8299; text-transform: uppercase; letter-spacing: .08em; }
+    .value { font-size: 30px; font-weight: 750; color: #C9A24A; }
+    .period { font-size: 14px; color: #A7ADC3; }
+    .chart-wrap { position: relative; border: 1px solid #252A48; border-radius: 8px; background: #151832; padding: 8px 10px 2px; }
+    svg { width: 100%; height: auto; display: block; }
+    .axis { stroke: #333957; stroke-width: 1.5; }
+    .grid { stroke: #252A48; stroke-width: 1; }
+    .tick { fill: #8B91A8; font-size: 13px; }
+    .axis-title { fill: #C9A24A; font-size: 13px; font-weight: 700; letter-spacing: .04em; }
+    .dot { filter: drop-shadow(0 0 5px rgba(255,255,255,.16)); }
+    .hover-band { fill: transparent; cursor: crosshair; }
+    .tooltip { position: absolute; pointer-events: none; transform: translate(-50%, -112%); background: #0C0E1C; color: #F8FAFC; border: 1px solid #C9A24A; border-radius: 7px; padding: 8px 10px; font-size: 13px; white-space: nowrap; box-shadow: 0 8px 22px rgba(0,0,0,.28); }
+    .empty { border: 1px solid #252A48; border-radius: 8px; padding: 18px; color: #A7ADC3; background: #151832; }
+  </style>
+  <base target="_self">
+</head>
+<body>
+  <main>
+    <h1>Abonnes newsletter</h1>
+    
+    <div class="summary">
+      <div>
+        <div class="label">Derniere valeur</div>
+        <div class="value">2 054</div>
+      </div>
+      <div>
+        <div class="label">Periode</div>
+        <div class="period">2026-07-06 -> 2026-07-06</div>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <svg viewBox="0 0 960 460" role="img" aria-label="Abonnes newsletter">
+        <defs>
+          <linearGradient id="lineGradient" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stop-color="#5AA0D7" />
+            <stop offset="52%" stop-color="#9B6AC4" />
+            <stop offset="100%" stop-color="#C9A24A" />
+          </linearGradient>
+        </defs>
+        <line x1="72" y1="54" x2="72" y2="406" class="axis" />
+        <line x1="72" y1="406" x2="888" y2="406" class="axis" />
+        <line x1="72" y1="54" x2="888" y2="54" class="grid" />
+        <line x1="72" y1="230" x2="888" y2="230" class="grid" />
+        <line x1="72" y1="406" x2="888" y2="406" class="grid" />
+        <text x="64" y="58" class="tick" text-anchor="end">2 055</text>
+        <text x="64" y="234" class="tick" text-anchor="end">1027.5</text>
+        <text x="64" y="410" class="tick" text-anchor="end">0</text>
+        <text x="72.0" y="432" class="tick x-label" text-anchor="middle">07-06</text>
+        <text x="480" y="454" class="axis-title" text-anchor="middle">Semaines</text>
+        <text x="18" y="230" class="axis-title" text-anchor="middle" transform="rotate(-90 18 230)">Nombre d&#x27;abonnes</text>
+        <path d="M 72.0 54.2" fill="none" stroke="url(#lineGradient)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+        <g fill="#C9A24A"><circle class="dot" cx="72.0" cy="54.2" r="4" /></g>
+        <g><rect class="hover-band" x="72.0" y="54" width="816.0" height="352" data-label="2026-07-06 - 2 054" /></g>
+      </svg>
+      <div id="tooltip" class="tooltip" hidden></div>
+    </div>
+    
+  </main>
+  <script>
+    const tooltip = document.getElementById('tooltip');
+    document.querySelectorAll('.hover-band').forEach((band) => {
+      band.addEventListener('mousemove', (event) => {
+        const wrap = band.closest('.chart-wrap').getBoundingClientRect();
+        tooltip.textContent = band.dataset.label;
+        tooltip.hidden = false;
+        tooltip.style.left = `${event.clientX - wrap.left}px`;
+        tooltip.style.top = `${event.clientY - wrap.top}px`;
+      });
+      band.addEventListener('mouseleave', () => { tooltip.hidden = true; });
+    });
+  </script>
+</body>
+</html>
