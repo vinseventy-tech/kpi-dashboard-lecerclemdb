@@ -1,0 +1,60 @@
+name: Update KPI pages
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 7 * * 1"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Write GA4 service account file
+        env:
+          GA4_SERVICE_ACCOUNT_JSON: ${{ secrets.GA4_SERVICE_ACCOUNT_JSON }}
+        run: |
+          printf '%s' "$GA4_SERVICE_ACCOUNT_JSON" > ga4-service-account.json
+
+      - name: Update KPI database and static pages
+        env:
+          HUBSPOT_ACCESS_TOKEN: ${{ secrets.HUBSPOT_ACCESS_TOKEN }}
+          GA4_PROPERTY_ID: ${{ secrets.GA4_PROPERTY_ID }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/ga4-service-account.json
+          KPI_DATABASE_PATH: ./kpi.sqlite3
+          KPI_CONFIG_PATH: ./config/kpi_config.example.json
+          PYTHONPATH: ./src
+        run: |
+          TODAY="$(date +%F)"
+          python3 -m kpi_app.cli backfill-newsletter --weeks 52 --date "$TODAY" --save
+          python3 -m kpi_app.cli backfill-website --weeks 52 --date "$TODAY" --save
+          python3 -m kpi_app.cli compact-db
+          python3 -m kpi_app.cli export-static --output . --weeks 52
+
+      - name: Remove temporary secret file
+        if: always()
+        run: |
+          rm -f ga4-service-account.json
+
+      - name: Commit updated KPI pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html newsletter-sent.html newsletter-subscribers.html newsletter-open-rate.html website-visits.html kpi.sqlite3
+          if git diff --cached --quiet; then
+            echo "No KPI changes to commit."
+          else
+            git commit -m "Update KPI pages"
+            git push
+          fi
