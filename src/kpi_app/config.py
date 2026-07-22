@@ -17,6 +17,10 @@ class Settings:
     ga4_property_id: str | None
     google_application_credentials: Path | None
     ga4_timeout_seconds: int
+    metricool_user_token: str | None
+    metricool_base_url: str
+    metricool_timezone: str
+    metricool_timeout_seconds: int
 
 
 def load_settings() -> Settings:
@@ -32,6 +36,10 @@ def load_settings() -> Settings:
         if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
         else None,
         ga4_timeout_seconds=int(os.environ.get("GA4_TIMEOUT_SECONDS", "15")),
+        metricool_user_token=os.environ.get("METRICOOL_USER_TOKEN"),
+        metricool_base_url=os.environ.get("METRICOOL_BASE_URL", "https://app.metricool.com/api"),
+        metricool_timezone=os.environ.get("METRICOOL_TIMEZONE", "Europe/Paris"),
+        metricool_timeout_seconds=int(os.environ.get("METRICOOL_TIMEOUT_SECONDS", "30")),
     )
 
 
@@ -56,3 +64,9 @@ def require_google_credentials(settings: Settings) -> Path:
     if not settings.google_application_credentials:
         raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS is required for GA4 API calls.")
     return settings.google_application_credentials
+
+
+def require_metricool_user_token(settings: Settings) -> str:
+    if not settings.metricool_user_token:
+        raise RuntimeError("METRICOOL_USER_TOKEN is required for Metricool API calls.")
+    return settings.metricool_user_token
