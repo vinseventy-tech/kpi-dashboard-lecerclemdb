@@ -49,6 +49,7 @@ def compute_newsletter_email_stats(
     send_date_field = fields["send_date"]
 
     sent_count = 0
+    sent_recipients = 0.0
     delivered = 0.0
     opens = 0.0
 
@@ -65,6 +66,7 @@ def compute_newsletter_email_stats(
         email_sent = _number(stats.get("sent", props.get("sent")))
         if email_sent or email_delivered or email_opens:
             sent_count += 1
+        sent_recipients += email_sent or email_delivered
         delivered += email_delivered
         opens += email_opens
 
@@ -95,6 +97,20 @@ def compute_newsletter_email_stats(
             segment="newsletter",
             dimension_1=f"delivered={int(delivered)}",
             dimension_2=f"opens={int(opens)}",
+            source_record_count=len(emails),
+        ),
+        KpiSnapshot(
+            kpi_code="newsletter_sent_recipients_weekly",
+            kpi_name="Destinataires newsletters envoyees",
+            period_type=period.period_type,
+            period_start=period.start,
+            period_end=period.end,
+            value=float(sent_recipients),
+            unit="count",
+            source="hubspot",
+            segment="newsletter",
+            dimension_1=f"sent={int(sent_recipients)}",
+            dimension_2=f"newsletter_count={int(sent_count)}",
             source_record_count=len(emails),
         ),
     ]
