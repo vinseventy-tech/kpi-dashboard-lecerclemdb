@@ -27,11 +27,11 @@ CHARTS = {
         "axis": "Nombre d'abonnes",
         "segment": "newsletter",
         "secondary_kpi": {
-            "kpi_code": "newsletter_sent_count_weekly",
-            "label": "Newsletters envoyees",
+            "kpi_code": "newsletter_sent_recipients_weekly",
+            "label": "Destinataires envoyes",
             "format": "count",
             "color": "#5AA0D7",
-            "axis": "Newsletters envoyees",
+            "axis": "Destinataires envoyes",
         },
     },
     "/newsletter/open-rate": {
@@ -303,7 +303,7 @@ def render_svg_dual_axis(
         label = (
             f"{row['period_start']} - "
             f"Abonnes: {format_value(float(row['value']), primary_format)} | "
-            f"Newsletters envoyees: {format_value(sent_value, secondary_format)}"
+            f"Destinataires envoyes: {format_value(sent_value, secondary_format)}"
         )
         band_x = max(72, x - band_width / 2)
         hover_bands.append(
@@ -323,7 +323,7 @@ def render_svg_dual_axis(
         <div class="value">{html.escape(format_value(float(latest_primary["value"]), primary_format))}</div>
       </div>
       <div>
-        <div class="label">Newsletters envoyees semaine</div>
+        <div class="label">Destinataires envoyes semaine</div>
         <div class="value secondary-value">{html.escape(format_value(float(latest_secondary["value"]), secondary_format))}</div>
       </div>
       <div>
