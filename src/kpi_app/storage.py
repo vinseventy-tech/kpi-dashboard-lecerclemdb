@@ -150,6 +150,7 @@ def latest_snapshots_for_kpi(
           unit,
           source,
           segment,
+          owner,
           dimension_1,
           dimension_2,
           computed_at
@@ -161,6 +162,51 @@ def latest_snapshots_for_kpi(
         params,
     ).fetchall()
     return list(reversed(rows))
+
+
+def latest_snapshots_for_kpi_series(
+    connection: sqlite3.Connection,
+    kpi_code: str,
+    limit: int = 52,
+    segment: str | None = None,
+) -> list[sqlite3.Row]:
+    params: list[str | int] = [kpi_code]
+    where = "kpi_code = ?"
+    if segment is not None:
+        where += " AND segment = ?"
+        params.append(segment)
+    params.append(limit)
+    rows = connection.execute(
+        f"""
+        WITH latest_periods AS (
+          SELECT DISTINCT period_start
+          FROM kpi_snapshots
+          WHERE {where}
+          ORDER BY period_start DESC
+          LIMIT ?
+        )
+        SELECT
+          kpi_code,
+          kpi_name,
+          period_type,
+          period_start,
+          period_end,
+          value,
+          unit,
+          source,
+          segment,
+          owner,
+          dimension_1,
+          dimension_2,
+          computed_at
+        FROM kpi_snapshots
+        WHERE {where}
+          AND period_start IN (SELECT period_start FROM latest_periods)
+        ORDER BY period_start ASC, owner ASC
+        """,
+        [*params, *params[:-1]],
+    ).fetchall()
+    return list(rows)
 
 
 def compact_snapshot_ids(connection: sqlite3.Connection) -> int:
