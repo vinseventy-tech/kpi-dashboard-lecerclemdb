@@ -10,8 +10,12 @@
     main { padding: 22px 26px 18px; background: radial-gradient(circle at 85% 10%, rgba(201,162,74,.16), transparent 34%), #101223; min-height: 100vh; box-sizing: border-box; }
     h1 { font-size: 25px; line-height: 1.2; margin: 0 0 14px; letter-spacing: .01em; }
     .summary { display: flex; gap: 28px; align-items: baseline; margin-bottom: 8px; }
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 0 0 12px; color: #A7ADC3; font-size: 13px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 7px; }
+    .legend-item i { width: 22px; height: 4px; border-radius: 999px; display: inline-block; }
     .label { font-size: 12px; color: #7C8299; text-transform: uppercase; letter-spacing: .08em; }
     .value { font-size: 30px; font-weight: 750; color: #C9A24A; }
+    .secondary-value { color: #5AA0D7; }
     .period { font-size: 14px; color: #A7ADC3; }
     .chart-wrap { position: relative; border: 1px solid #252A48; border-radius: 8px; background: #151832; padding: 8px 10px 2px; }
     svg { width: 100%; height: auto; display: block; }
@@ -19,6 +23,8 @@
     .grid { stroke: #252A48; stroke-width: 1; }
     .tick { fill: #8B91A8; font-size: 13px; }
     .axis-title { fill: #C9A24A; font-size: 13px; font-weight: 700; letter-spacing: .04em; }
+    .axis-title-secondary { fill: #5AA0D7; }
+    .secondary-tick { fill: #8FBEE3; }
     .dot { filter: drop-shadow(0 0 5px rgba(255,255,255,.16)); }
     .hover-band { fill: transparent; cursor: crosshair; }
     .tooltip { position: absolute; pointer-events: none; transform: translate(-50%, -112%); background: #0C0E1C; color: #F8FAFC; border: 1px solid #C9A24A; border-radius: 7px; padding: 8px 10px; font-size: 13px; white-space: nowrap; box-shadow: 0 8px 22px rgba(0,0,0,.28); }
@@ -31,37 +37,44 @@
     
     <div class="summary">
       <div>
-        <div class="label">Derniere valeur</div>
+        <div class="label">Derniere valeur abonnes</div>
         <div class="value">2 054</div>
+      </div>
+      <div>
+        <div class="label">Newsletters envoyees semaine</div>
+        <div class="value secondary-value">1</div>
       </div>
       <div>
         <div class="label">Periode</div>
         <div class="period">2026-07-06 -> 2026-07-20</div>
       </div>
     </div>
+    <div class="legend">
+      <span class="legend-item"><i style="background:#C9A24A"></i>Abonnes newsletter</span>
+      <span class="legend-item"><i style="background:#5AA0D7"></i>Newsletters envoyees</span>
+    </div>
     <div class="chart-wrap">
       <svg viewBox="0 0 960 460" role="img" aria-label="Abonnes newsletter">
-        <defs>
-          <linearGradient id="lineGradient" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0%" stop-color="#5AA0D7" />
-            <stop offset="52%" stop-color="#9B6AC4" />
-            <stop offset="100%" stop-color="#C9A24A" />
-          </linearGradient>
-        </defs>
         <line x1="72" y1="54" x2="72" y2="406" class="axis" />
+        <line x1="888" y1="54" x2="888" y2="406" class="axis" />
         <line x1="72" y1="406" x2="888" y2="406" class="axis" />
         <line x1="72" y1="54" x2="888" y2="54" class="grid" />
         <line x1="72" y1="230" x2="888" y2="230" class="grid" />
         <line x1="72" y1="406" x2="888" y2="406" class="grid" />
         <text x="64" y="58" class="tick" text-anchor="end">2074.5</text>
-<text x="64" y="234" class="tick" text-anchor="end">2 054</text>
-<text x="64" y="410" class="tick" text-anchor="end">2033.5</text>
-<text x="72.0" y="432" class="tick x-label" text-anchor="middle">07-06</text><text x="480.0" y="432" class="tick x-label" text-anchor="middle">07-13</text><text x="888.0" y="432" class="tick x-label" text-anchor="middle">07-20</text>
-<text x="480" y="454" class="axis-title" text-anchor="middle">Semaines</text>
-<text x="18" y="230" class="axis-title" text-anchor="middle" transform="rotate(-90 18 230)">Nombre d&#x27;abonnes</text>
-<path d="M 72.0 230.0 L 888.0 230.0" fill="none" stroke="#C9A24A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
-<g fill="#C9A24A"><circle class="dot" cx="72.0" cy="230.0" r="4" /><circle class="dot" cx="480.0" cy="230.0" r="4" /><circle class="dot" cx="888.0" cy="230.0" r="4" /></g>
-        <g><rect class="hover-band" x="72.0" y="54" width="408.0" height="352" data-label="2026-07-06 - 2 054" /><rect class="hover-band" x="276.0" y="54" width="408.0" height="352" data-label="2026-07-13 - 2 054" /><rect class="hover-band" x="684.0" y="54" width="408.0" height="352" data-label="2026-07-20 - 2 054" /></g>
+        <text x="64" y="234" class="tick" text-anchor="end">2 054</text>
+        <text x="64" y="410" class="tick" text-anchor="end">2033.5</text>
+        <text x="896" y="58" class="tick secondary-tick" text-anchor="start">2</text>
+        <text x="896" y="234" class="tick secondary-tick" text-anchor="start">1</text>
+        <text x="896" y="410" class="tick secondary-tick" text-anchor="start">0</text>
+        <text x="72.0" y="432" class="tick x-label" text-anchor="middle">07-06</text><text x="480.0" y="432" class="tick x-label" text-anchor="middle">07-13</text><text x="888.0" y="432" class="tick x-label" text-anchor="middle">07-20</text>
+        <text x="480" y="454" class="axis-title" text-anchor="middle">Semaines</text>
+        <text x="18" y="230" class="axis-title" text-anchor="middle" transform="rotate(-90 18 230)">Nombre d&#x27;abonnes</text>
+        <text x="942" y="230" class="axis-title axis-title-secondary" text-anchor="middle" transform="rotate(90 942 230)">Newsletters envoyees</text>
+        <path d="M 72.0 230.0 C 140.0 230.0, 344.0 230.0, 480.0 230.0 C 616.0 230.0, 820.0 230.0, 888.0 230.0" fill="none" stroke="#C9A24A" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M 72.0 230.0 C 140.0 230.0, 344.0 230.0, 480.0 230.0 C 616.0 230.0, 820.0 230.0, 888.0 230.0" fill="none" stroke="#5AA0D7" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" opacity=".92" />
+        <circle class="dot" cx="72.0" cy="230.0" r="4" fill="#C9A24A" /><circle class="dot" cx="480.0" cy="230.0" r="4" fill="#C9A24A" /><circle class="dot" cx="888.0" cy="230.0" r="4" fill="#C9A24A" /><circle class="dot" cx="72.0" cy="230.0" r="3.5" fill="#5AA0D7" /><circle class="dot" cx="480.0" cy="230.0" r="3.5" fill="#5AA0D7" /><circle class="dot" cx="888.0" cy="230.0" r="3.5" fill="#5AA0D7" />
+        <g><rect class="hover-band" x="72.0" y="54" width="408.0" height="352" data-label="2026-07-06 - Abonnes: 2 054 | Newsletters envoyees: 1" /><rect class="hover-band" x="276.0" y="54" width="408.0" height="352" data-label="2026-07-13 - Abonnes: 2 054 | Newsletters envoyees: 1" /><rect class="hover-band" x="684.0" y="54" width="408.0" height="352" data-label="2026-07-20 - Abonnes: 2 054 | Newsletters envoyees: 1" /></g>
       </svg>
       <div id="tooltip" class="tooltip" hidden></div>
     </div>
