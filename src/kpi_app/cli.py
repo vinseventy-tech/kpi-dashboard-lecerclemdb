@@ -17,15 +17,24 @@ from .calculators.newsletter import (
     compute_newsletter_email_stats,
     compute_newsletter_subscribers_snapshot,
 )
+from .calculators.linkedin import compute_linkedin_weekly_snapshots
 from .calculators.website import read_website_visits_csv
 from .calculators.website import ga4_daily_rows_to_weekly_snapshots
-from .config import load_config, load_settings, require_ga4_property_id, require_google_credentials, require_token
+from .config import (
+    load_config,
+    load_settings,
+    require_ga4_property_id,
+    require_google_credentials,
+    require_metricool_user_token,
+    require_token,
+)
 from .ga4_client import Ga4Client, hostname_filter
 from .hubspot_client import HubSpotClient, HubSpotListClient, HubSpotMarketingEmailClient, HubSpotSchemaClient
 from .hubspot_kpi_sync import kpi_snapshot_schema_payload, upsert_snapshot_to_hubspot
+from .metricool_client import MetricoolClient
 from .models import KpiSnapshot
 from .periods import Period, month_period, rolling_week_periods, week_period
-from .storage import compact_snapshot_ids, connect, init_db, latest_snapshots_for_kpi, upsert_snapshots
+from .storage import compact_snapshot_ids, connect, init_db, latest_snapshots_for_kpi, latest_snapshots_for_kpi_series, upsert_snapshots
 from .web import CHARTS, render_page, rows_as_dicts
 
 
@@ -37,6 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("compact-db", help="Nettoie les doublons de snapshots en base locale.")
     subparsers.add_parser("diagnose-newsletter", help="Teste les acces HubSpot necessaires aux KPIs newsletter.")
     subparsers.add_parser("diagnose-ga4", help="Teste les acces GA4 necessaires aux visites du site.")
+    subparsers.add_parser("diagnose-metricool", help="Teste les acces Metricool necessaires aux KPIs LinkedIn.")
     hostnames = subparsers.add_parser("diagnose-ga4-hostnames", help="Liste les hostnames vus dans GA4, sans filtre de domaine.")
     hostnames.add_argument("--days", type=int, default=90, help="Nombre de jours a inspecter.")
     subparsers.add_parser("diagnose-kpi-schema", help="Verifie si l'objet HubSpot KPI Snapshot existe.")
@@ -56,6 +66,11 @@ def build_parser() -> argparse.ArgumentParser:
     website_backfill.add_argument("--weeks", type=int, default=52)
     website_backfill.add_argument("--date", default=date.today().isoformat(), help="Date de fin de fenetre, format YYYY-MM-DD.")
     website_backfill.add_argument("--save", action="store_true", help="Sauvegarde les snapshots en SQLite.")
+
+    linkedin_backfill = subparsers.add_parser("backfill-linkedin", help="Recupere les posts LinkedIn depuis Metricool sur les semaines glissantes.")
+    linkedin_backfill.add_argument("--weeks", type=int, default=52)
+    linkedin_backfill.add_argument("--date", default=date.today().isoformat(), help="Date de fin de fenetre, format YYYY-MM-DD.")
+    linkedin_backfill.add_argument("--save", action="store_true", help="Sauvegarde les snapshots en SQLite.")
 
     export_static = subparsers.add_parser("export-static", help="Genere les pages HTML statiques pour GitHub Pages.")
     export_static.add_argument("--output", default="./github-pages-kpi-dashboard", help="Dossier de sortie des fichiers HTML.")
@@ -227,6 +242,15 @@ def ga4_client() -> tuple[Ga4Client, str]:
     return Ga4Client(require_google_credentials(settings), timeout_seconds=settings.ga4_timeout_seconds), require_ga4_property_id(settings)
 
 
+def metricool_client() -> MetricoolClient:
+    settings = load_settings()
+    return MetricoolClient(
+        user_token=require_metricool_user_token(settings),
+        base_url=settings.metricool_base_url,
+        timeout_seconds=settings.metricool_timeout_seconds,
+    )
+
+
 def website_ga4_payload(periods: list[Period], config: dict[str, Any]) -> dict[str, Any]:
     website_config = config.get("website", {})
     payload: dict[str, Any] = {
@@ -251,6 +275,61 @@ def compute_website_backfill(day: date, weeks: int, config: dict[str, Any]) -> l
     client, property_id = ga4_client()
     report = client.run_report(property_id, website_ga4_payload(periods, config))
     return ga4_daily_rows_to_weekly_snapshots(report.get("rows", []), periods)
+
+
+def metricool_linkedin_accounts(config: dict[str, Any]) -> list[dict[str, Any]]:
+    accounts = config.get("linkedin", {}).get("metricool_accounts", [])
+    return [account for account in accounts if account.get("owner") and account.get("user_id") and account.get("blog_id")]
+
+
+def compute_linkedin_backfill(day: date, weeks: int, config: dict[str, Any]) -> list[KpiSnapshot]:
+    periods = rolling_week_periods(day, weeks)
+    accounts = metricool_linkedin_accounts(config)
+    client = metricool_client()
+    settings = load_settings()
+    posts_by_owner: dict[str, list[dict[str, Any]]] = {}
+    for account in accounts:
+        owner = str(account["owner"])
+        posts_by_owner[owner] = client.linkedin_posts(
+            user_id=str(account["user_id"]),
+            blog_id=str(account["blog_id"]),
+            start_date=periods[0].start.isoformat(),
+            end_date=periods[-1].end.isoformat(),
+            timezone=settings.metricool_timezone,
+        )
+    return compute_linkedin_weekly_snapshots(posts_by_owner, periods, accounts)
+
+
+def diagnose_metricool(config: dict[str, Any]) -> list[dict[str, Any]]:
+    settings = load_settings()
+    token = require_metricool_user_token(settings)
+    accounts = metricool_linkedin_accounts(config)
+    results = [
+        _diagnostic_result("Metricool token", bool(token), "Token renseigne."),
+        _diagnostic_result("Metricool LinkedIn accounts", bool(accounts), f"{len(accounts)} compte(s) LinkedIn configure(s)."),
+    ]
+    if not accounts:
+        return results
+    client = metricool_client()
+    today = date.today()
+    period = week_period(today)
+    account = accounts[0]
+    posts = client.linkedin_posts(
+        user_id=str(account["user_id"]),
+        blog_id=str(account["blog_id"]),
+        start_date=period.start.isoformat(),
+        end_date=period.end.isoformat(),
+        timezone=settings.metricool_timezone,
+    )
+    keys = sorted(posts[0].keys()) if posts else []
+    return [
+        *results,
+        _diagnostic_result(
+            "Metricool LinkedIn posts",
+            True,
+            f"Connexion OK. {len(posts)} post(s) trouve(s) pour {account.get('label', account.get('owner'))}. Cles: {', '.join(keys[:20]) if keys else 'aucun post cette semaine'}",
+        ),
+    ]
 
 
 def diagnose_ga4(config: dict[str, Any]) -> list[dict[str, Any]]:
@@ -633,13 +712,23 @@ def export_static_pages(output_dir: Path, weeks: int) -> list[dict[str, Any]]:
         "/newsletter/subscribers": "newsletter-subscribers.html",
         "/newsletter/open-rate": "newsletter-open-rate.html",
         "/website/visits": "website-visits.html",
+        "/linkedin/posts": "linkedin-posts.html",
+        "/linkedin/engagement-rate": "linkedin-engagement-rate.html",
     }
     exported = []
     cards = []
     for path, filename in mapping.items():
         chart = CHARTS[path]
-        rows = latest_snapshots_for_kpi(connection, chart["kpi_code"], limit=weeks, segment=chart["segment"])
-        html = render_page(path, rows_as_dicts(rows))
+        if chart.get("series"):
+            rows = latest_snapshots_for_kpi_series(connection, chart["kpi_code"], limit=weeks, segment=chart["segment"])
+        else:
+            rows = latest_snapshots_for_kpi(connection, chart["kpi_code"], limit=weeks, segment=chart["segment"])
+        related_rows = {}
+        if chart.get("secondary_kpi"):
+            secondary = chart["secondary_kpi"]
+            secondary_rows = latest_snapshots_for_kpi(connection, secondary["kpi_code"], limit=weeks, segment=chart["segment"])
+            related_rows[secondary["kpi_code"]] = rows_as_dicts(secondary_rows)
+        html = render_page(path, rows_as_dicts(rows), related_rows)
         (output_dir / filename).write_text(html, encoding="utf-8")
         exported.append({"file": filename, "title": chart["title"], "points": len(rows)})
         cards.append((chart["title"], filename, len(rows)))
@@ -760,6 +849,26 @@ def main() -> None:
             )
         return
 
+    if args.command == "diagnose-metricool":
+        try:
+            print(json.dumps(diagnose_metricool(config), indent=2, ensure_ascii=False))
+        except RuntimeError as error:
+            print(
+                json.dumps(
+                    [
+                        {
+                            "check": "Metricool access",
+                            "ok": False,
+                            "detail": str(error),
+                            "next_step": "Renseigner METRICOOL_USER_TOKEN puis configurer user_id/blog_id pour les 3 comptes LinkedIn.",
+                        }
+                    ],
+                    indent=2,
+                    ensure_ascii=False,
+                )
+            )
+        return
+
     if args.command == "diagnose-ga4-hostnames":
         try:
             print(json.dumps(diagnose_ga4_hostnames(args.days), indent=2, ensure_ascii=False))
@@ -845,6 +954,13 @@ def main() -> None:
 
     if args.command == "backfill-website":
         snapshots = compute_website_backfill(date.fromisoformat(args.date), args.weeks, config)
+        print_snapshots(snapshots)
+        if args.save:
+            save_and_maybe_sync(snapshots, sync_hubspot=False)
+        return
+
+    if args.command == "backfill-linkedin":
+        snapshots = compute_linkedin_backfill(date.fromisoformat(args.date), args.weeks, config)
         print_snapshots(snapshots)
         if args.save:
             save_and_maybe_sync(snapshots, sync_hubspot=False)
