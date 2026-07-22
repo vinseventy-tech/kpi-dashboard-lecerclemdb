@@ -61,8 +61,11 @@ def chart_points(rows: list[dict], width: int, height: int, padding_x: int = 72,
     min_value = min(values)
     max_value = max(values)
     if min_value == max_value:
-        min_value = 0 if max_value >= 0 else min_value - 1
-        max_value = max_value + 1
+        padding = max(abs(max_value) * 0.01, 1)
+min_value = min_value - padding
+max_value = max_value + padding
+if min_value < 0 <= values[0]:
+    min_value = 0
     plot_width = width - padding_x * 2
     plot_height = height - padding_y * 2
     denominator = max(1, len(rows) - 1)
@@ -80,7 +83,7 @@ def smooth_path(points: list[tuple[float, float]]) -> str:
         return ""
     if len(points) == 1:
         x, y = points[0]
-        return f"M {x:.1f} {y:.1f}"
+        return f"M 72.0 {y:.1f} L 888.0 {y:.1f}"
     path = [f"M {points[0][0]:.1f} {points[0][1]:.1f}"]
     for index in range(len(points) - 1):
         p0 = points[index - 1] if index > 0 else points[index]
